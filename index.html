@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lumina • Spatial Notes & Calendar</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="spatial-theme">
+
+  <!-- Ambient Spatial Glows (Yellow & White Luminous Lighting) -->
+  <div class="spatial-bg-canvas" aria-hidden="true">
+    <div class="glow-orb orb-primary"></div>
+    <div class="glow-orb orb-secondary"></div>
+    <div class="glow-orb orb-white"></div>
+    <div class="spatial-mesh-grid"></div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Shared Date / Note Arrival Banner (shown when opened via a share link) -->
+  <div id="shared-link-banner" class="shared-banner hidden">
+    <div class="shared-banner-content">
+      <div class="banner-icon"><span class="banner-dot"></span></div>
+      <div class="banner-text">
+        <span class="banner-title" id="shared-banner-title">Viewing Shared Date Content</span>
+        <span class="banner-subtitle" id="shared-banner-subtitle">Client-side instant link preview</span>
+      </div>
+      <div class="banner-actions">
+        <button id="import-shared-btn" class="spatial-btn btn-sm btn-yellow">Save to My Notes</button>
+        <button id="close-banner-btn" class="spatial-btn btn-sm btn-ghost" title="Close banner">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP CONTAINER -->
+  <div class="app-layout">
+
+    <!-- FLOATING TOP SPATIAL NAV BAR -->
+    <header class="spatial-header glass-card">
+      <div class="header-left">
+        <div class="brand-logo">
+          <div class="logo-symbol">
+            <span class="sun-flare"></span>
+            <span class="logo-letter">L</span>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-name">Lumina<span class="brand-accent">.</span></h1>
+            <span class="brand-sub">Spatial Notes & Calendar</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <!-- Spatial Search Bar -->
+        <div class="spatial-search">
+          <span class="search-bullet"></span>
+          <input type="text" id="global-search-input" placeholder="Search notes, tags, dates (Ctrl+K)..." autocomplete="off">
+          <span class="search-badge">Ctrl+K</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Spatial Quick Action Dock -->
+        <button id="open-new-note-btn" class="spatial-btn btn-primary" title="Create a new note">
+          <span class="btn-icon">+</span>
+          <span class="btn-label">New Note</span>
+        </button>
+
+        <button id="toggle-calendar-view-btn" class="spatial-btn btn-glass" title="Toggle full calendar view">
+          <span class="btn-label">Calendar</span>
+        </button>
+
+        <button id="enter-focus-mode-btn" class="spatial-btn btn-focus" title="Enter immersive Focus Mode">
+          <span class="btn-label">Focus Mode</span>
+          <span class="focus-pulse"></span>
+        </button>
+
+        <button id="export-import-btn" class="spatial-btn btn-glass btn-sm" title="Backup & Restore data">
+          Backup
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN INTERFACE BODY -->
+    <main class="spatial-main">
+
+      <!-- LEFT SIDEBAR: CALENDAR & FILTERS (Floating Spatial Glass) -->
+      <aside class="spatial-sidebar glass-card">
+        
+        <!-- Interactive Mini Calendar Widget -->
+        <div class="calendar-widget">
+          <div class="cal-widget-header">
+            <button id="mini-cal-prev" class="cal-nav-btn" title="Previous Month">‹</button>
+            <div class="cal-month-title" id="mini-cal-month-title">October 2026</div>
+            <button id="mini-cal-next" class="cal-nav-btn" title="Next Month">›</button>
+          </div>
+          
+          <div class="cal-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          
+          <div class="cal-days-grid" id="mini-cal-days-grid">
+            <!-- Rendered dynamically by JS -->
+          </div>
+
+          <div class="cal-widget-footer">
+            <button id="mini-cal-today-btn" class="cal-today-btn">Jump to Today</button>
+            <button id="share-selected-date-btn" class="cal-share-date-btn" title="Create a shareable link for this date">
+              Share Date Link
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Filter & Category Section -->
+        <div class="sidebar-section">
+          <div class="section-title">Navigation</div>
+          <ul class="nav-filter-list">
+            <li class="filter-item active" data-filter="all">
+              <span class="filter-indicator"></span>
+              <span class="filter-label">All Notes</span>
+              <span class="filter-count" id="count-all">0</span>
+            </li>
+            <li class="filter-item" data-filter="today">
+              <span class="filter-indicator"></span>
+              <span class="filter-label">Today's Notes</span>
+              <span class="filter-count" id="count-today">0</span>
+            </li>
+            <li class="filter-item" data-filter="pinned">
+              <span class="filter-indicator"></span>
+              <span class="filter-label">Pinned Notes</span>
+              <span class="filter-count" id="count-pinned">0</span>
+            </li>
+            <li class="filter-item" data-filter="has-pics">
+              <span class="filter-indicator"></span>
+              <span class="filter-label">With Pictures</span>
+              <span class="filter-count" id="count-pics">0</span>
+            </li>
+            <li class="filter-item" data-filter="has-videos">
+              <span class="filter-indicator"></span>
+              <span class="filter-label">With Videos</span>
+              <span class="filter-count" id="count-videos">0</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Tags Cloud -->
+        <div class="sidebar-section">
+          <div class="section-title">Tags</div>
+          <div class="tags-cloud" id="tags-cloud-container">
+            <!-- Dynamic tags -->
+          </div>
+        </div>
+
+        <!-- Spatial Tip / Status Card -->
+        <div class="sidebar-footer-card">
+          <div class="footer-card-header">
+            <span class="card-status-dot"></span>
+            <span class="card-status-text">Client-Side Secure</span>
+          </div>
+          <p class="footer-card-desc">Your notes, images & videos are stored 100% locally on your device with instant link sharing.</p>
+        </div>
+      </aside>
+
+      <!-- CENTER CONTENT: NOTES CANVAS -->
+      <section class="spatial-content">
+
+        <!-- Active View / Filter Bar -->
+        <div class="content-toolbar glass-pill">
+          <div class="toolbar-left">
+            <span class="active-filter-badge" id="current-filter-badge">All Notes</span>
+            <span class="total-notes-text" id="notes-counter-text">Showing 0 notes</span>
+          </div>
+
+          <div class="toolbar-right">
+            <!-- Date Filter Clearer (visible when date is selected) -->
+            <button id="clear-date-filter-btn" class="spatial-btn btn-sm btn-ghost hidden">
+              Clear Date Filter
+            </button>
+            <!-- Share Current Date as Link Button -->
+            <button id="toolbar-share-date-btn" class="spatial-btn btn-sm btn-yellow-outline" title="Generate shareable URL link for this date">
+              Share Date Link
+            </button>
+            <div class="view-mode-toggle">
+              <button id="view-grid-btn" class="view-btn active" title="Spatial Grid View">Grid</button>
+              <button id="view-list-btn" class="view-btn" title="Compact List View">List</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Grid Container -->
+        <div class="notes-grid" id="notes-container">
+          <!-- Dynamic note cards injected here -->
+        </div>
+
+        <!-- Empty State (Shown when no notes found) -->
+        <div id="empty-state" class="empty-state-card glass-card hidden">
+          <div class="empty-vector-icon"></div>
+          <h3 class="empty-title">No notes found</h3>
+          <p class="empty-desc">Create your first spatial note with pictures, videos, and calendar dates.</p>
+          <button id="empty-create-btn" class="spatial-btn btn-primary">+ Create Note</button>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- FULL CALENDAR MODAL / OVERLAY -->
+  <dialog id="full-calendar-dialog" class="spatial-dialog full-cal-dialog">
+    <div class="dialog-surface glass-card">
+      <div class="dialog-header">
+        <div class="cal-header-left">
+          <div class="cal-large-title">
+            <span id="full-cal-title">October 2026</span>
+          </div>
+          <div class="cal-controls">
+            <button id="full-cal-prev" class="cal-nav-btn">‹</button>
+            <button id="full-cal-today" class="cal-today-btn">Today</button>
+            <button id="full-cal-next" class="cal-nav-btn">›</button>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button id="share-cal-current-date-btn" class="spatial-btn btn-sm btn-yellow">Share Selected Date Link</button>
+          <button id="close-calendar-dialog-btn" class="dialog-close-btn" title="Close">Close</button>
+        </div>
+      </div>
+
+      <div class="dialog-body full-cal-body">
+        <div class="full-cal-weekdays">
+          <span>Sunday</span><span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span><span>Saturday</span>
+        </div>
+        <div class="full-cal-grid" id="full-cal-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- NOTE EDITOR MODAL (Floating Spatial Sheet) -->
+  <dialog id="note-editor-dialog" class="spatial-dialog editor-dialog">
+    <div class="dialog-surface glass-card editor-surface">
+      <div class="dialog-header">
+        <div class="editor-header-info">
+          <span class="editor-badge" id="editor-mode-badge">New Note</span>
+          <span class="editor-date-display" id="editor-date-indicator">Date: Oct 10, 2026</span>
+        </div>
+        <div class="dialog-actions">
+          <button id="editor-pin-toggle-btn" class="action-text-btn" title="Pin note to top">Pin Note</button>
+          <button id="close-editor-dialog-btn" class="dialog-close-btn" title="Close without saving">Close</button>
+        </div>
+      </div>
+
+      <form id="note-editor-form" class="editor-form" onsubmit="return false;">
+        <!-- Hidden input for note ID -->
+        <input type="hidden" id="edit-note-id" value="">
+
+        <!-- Title & Date Row -->
+        <div class="editor-row title-date-row">
+          <input type="text" id="note-title-input" class="spatial-input title-input" placeholder="Title of your note..." required>
+          
+          <div class="date-picker-wrapper">
+            <input type="date" id="note-date-input" class="spatial-input date-input" required>
+          </div>
+        </div>
+
+        <!-- Formatting Toolbar -->
+        <div class="editor-toolbar">
+          <div class="toolbar-group">
+            <button type="button" class="tool-btn" data-tool="bold" title="Bold"><b>B</b></button>
+            <button type="button" class="tool-btn" data-tool="italic" title="Italic"><i>I</i></button>
+            <button type="button" class="tool-btn" data-tool="h1" title="Heading 1">H1</button>
+            <button type="button" class="tool-btn" data-tool="h2" title="Heading 2">H2</button>
+            <button type="button" class="tool-btn" data-tool="bullet" title="Bullet List">List</button>
+            <button type="button" class="tool-btn" data-tool="todo" title="Checklist">[ ] Task</button>
+            <button type="button" class="tool-btn" data-tool="quote" title="Quote">Quote</button>
+            <button type="button" class="tool-btn" data-tool="code" title="Code Block">&lt;/&gt;</button>
+          </div>
+
+          <div class="toolbar-group color-palette-group">
+            <span class="palette-label">Tint:</span>
+            <label class="color-dot-label">
+              <input type="radio" name="note-color" value="yellow-light" checked>
+              <span class="color-dot tint-yellow"></span>
+            </label>
+            <label class="color-dot-label">
+              <input type="radio" name="note-color" value="white-pure">
+              <span class="color-dot tint-white"></span>
+            </label>
+            <label class="color-dot-label">
+              <input type="radio" name="note-color" value="amber-warm">
+              <span class="color-dot tint-amber"></span>
+            </label>
+            <label class="color-dot-label">
+              <input type="radio" name="note-color" value="cream-soft">
+              <span class="color-dot tint-cream"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Note Body Text Area -->
+        <div class="editor-body-wrapper">
+          <textarea id="note-content-input" class="spatial-textarea" placeholder="Type your thoughts, paste images directly (Ctrl+V), or add media below..."></textarea>
+        </div>
+
+        <!-- MEDIA ATTACHMENTS SECTION (Pics & Videos) -->
+        <div class="media-management-section">
+          
+          <div class="media-tabs-header">
+            <div class="media-header-left">
+              <span class="media-section-title">Media Attachments</span>
+              <span class="media-count-badge" id="media-count-badge">0 items</span>
+            </div>
+            
+            <div class="media-action-buttons">
+              <!-- Upload Image Button -->
+              <label class="spatial-btn btn-sm btn-yellow file-upload-label" title="Upload pictures from computer">
+                <span>Add Picture</span>
+                <input type="file" id="image-file-input" accept="image/*" multiple hidden>
+              </label>
+
+              <!-- Upload Video Button -->
+              <label class="spatial-btn btn-sm btn-yellow-outline file-upload-label" title="Upload video file from computer">
+                <span>Add Video</span>
+                <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/quicktime,video/mkv" multiple hidden>
+              </label>
+
+              <!-- Media by Link URL (Modal Toggle) -->
+              <button type="button" id="add-media-url-btn" class="spatial-btn btn-sm btn-ghost" title="Add image or YouTube/video URL">
+                Add from URL
+              </button>
+            </div>
+          </div>
+
+          <!-- URL Input Expansion Row (hidden until toggled) -->
+          <div id="media-url-input-row" class="media-url-row hidden">
+            <select id="media-url-type" class="spatial-select">
+              <option value="image">Image URL</option>
+              <option value="video">Video / YouTube URL</option>
+            </select>
+            <input type="url" id="media-url-input" class="spatial-input" placeholder="https://example.com/photo.jpg or YouTube link...">
+            <button type="button" id="confirm-media-url-btn" class="spatial-btn btn-sm btn-yellow">Attach</button>
+            <button type="button" id="cancel-media-url-btn" class="spatial-btn btn-sm btn-ghost">Cancel</button>
+          </div>
+
+          <!-- Drag and Drop Dropzone -->
+          <div id="media-dropzone" class="media-dropzone">
+            <div class="dropzone-text">
+              <span>Drag & drop pictures or video files here, or copy & paste with <kbd>Ctrl+V</kbd></span>
+            </div>
+          </div>
+
+          <!-- Attachments Previews Grid -->
+          <div class="attachments-preview-grid" id="attachments-preview-grid">
+            <!-- Rendered attached images & videos with remove buttons -->
+          </div>
+
+        </div>
+
+        <!-- Tags Row -->
+        <div class="editor-row tags-row">
+          <div class="tags-input-container">
+            <input type="text" id="note-tags-input" class="spatial-input" placeholder="Tags (separated by commas, e.g. project, ideas, study)">
+          </div>
+        </div>
+
+        <!-- Editor Footer Actions -->
+        <div class="editor-footer">
+          <div class="footer-left">
+            <button type="button" id="delete-note-btn" class="spatial-btn btn-danger hidden">
+              Delete Note
+            </button>
+          </div>
+          <div class="footer-right">
+            <button type="button" id="cancel-note-btn" class="spatial-btn btn-ghost">Cancel</button>
+            <button type="button" id="save-note-btn" class="spatial-btn btn-primary">Save Note</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </dialog>
+
+  <!-- SHARE LINK MODAL (Spatial Link Generation with Date Sharing) -->
+  <dialog id="share-dialog" class="spatial-dialog share-dialog">
+    <div class="dialog-surface glass-card share-surface">
+      <div class="dialog-header">
+        <div class="share-header-title">
+          <div>
+            <h3 id="share-modal-title">Share Date as Link</h3>
+            <span class="share-sub" id="share-modal-sub">Zero-backend client-side link sharing</span>
+          </div>
+        </div>
+        <button id="close-share-dialog-btn" class="dialog-close-btn">Close</button>
+      </div>
+
+      <div class="share-dialog-body">
+        
+        <p class="share-explanation">
+          This link encodes your selected notes and date directly into the URL fragment. Anyone who opens it can view and import your notes without needing an account or server!
+        </p>
+
+        <!-- Link Display Box -->
+        <div class="share-link-box">
+          <input type="text" id="share-link-input" class="spatial-input share-url-input" readonly>
+          <button id="copy-share-link-btn" class="spatial-btn btn-yellow">
+            <span id="copy-btn-text">Copy Link</span>
+          </button>
+        </div>
+
+        <!-- Native Share / QR Code Row -->
+        <div class="share-options-row">
+          <button id="native-share-btn" class="spatial-btn btn-glass">
+            Share via Device
+          </button>
+          <button id="toggle-qr-code-btn" class="spatial-btn btn-glass">
+            View QR Code
+          </button>
+        </div>
+
+        <!-- QR Code Container (Canvas) -->
+        <div id="qr-code-wrapper" class="qr-code-wrapper hidden">
+          <div class="qr-canvas-card">
+            <canvas id="share-qr-canvas" width="200" height="200"></canvas>
+            <span class="qr-caption">Scan with phone camera to view shared notes</span>
+          </div>
+        </div>
+
+        <!-- Preview of notes being shared -->
+        <div class="share-preview-section">
+          <div class="preview-title" id="share-preview-title">Included in this Link:</div>
+          <div class="share-preview-list" id="share-preview-list">
+            <!-- List of note titles included in link -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </dialog>
+
+  <!-- DATA EXPORT / IMPORT MODAL -->
+  <dialog id="settings-dialog" class="spatial-dialog settings-dialog">
+    <div class="dialog-surface glass-card">
+      <div class="dialog-header">
+        <div class="cal-large-title">
+          <span>Data & Workspace Backup</span>
+        </div>
+        <button id="close-settings-dialog-btn" class="dialog-close-btn">Close</button>
+      </div>
+
+      <div class="dialog-body settings-body">
+        <div class="settings-card">
+          <h4>Complete Workspace Backup</h4>
+          <p>Export all your notes, calendar events, images, and video metadata to a JSON backup file.</p>
+          <button id="export-json-btn" class="spatial-btn btn-yellow">Export Backup (JSON)</button>
+        </div>
+
+        <div class="settings-card">
+          <h4>Restore from Backup</h4>
+          <p>Import a previously saved backup file to restore your notes.</p>
+          <label class="spatial-btn btn-yellow-outline file-upload-label">
+            <span>Select Backup File (.json)</span>
+            <input type="file" id="import-json-input" accept=".json" hidden>
+          </label>
+        </div>
+
+        <div class="settings-card danger-zone">
+          <h4>Reset Workspace</h4>
+          <p>Clear all local notes and attachments from this browser.</p>
+          <button id="clear-all-data-btn" class="spatial-btn btn-danger">Clear All Data</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- IMAGE LIGHTBOX MODAL -->
+  <dialog id="lightbox-dialog" class="spatial-dialog lightbox-dialog">
+    <div class="lightbox-wrapper">
+      <button id="close-lightbox-btn" class="lightbox-close">Close</button>
+      <img id="lightbox-img" src="" alt="Enlarged note picture">
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+  </dialog>
+
+  <!-- ======================================================== -->
+  <!-- FOCUS MODE OVERLAY (Immersive Spatial Work Pod)          -->
+  <!-- ======================================================== -->
+  <div id="focus-mode-overlay" class="focus-overlay hidden">
+    
+    <!-- Video Background Layer (Left Empty as requested: ready for user's video) -->
+    <div class="focus-video-layer">
+      <!-- User can insert video src or upload custom video -->
+      <video id="focus-bg-video" class="focus-video-element" autoplay loop muted playsinline></video>
+      
+      <!-- Video Placeholder Notice / Custom Video Injector -->
+      <div id="video-placeholder-notice" class="video-placeholder-notice">
+        <span class="placeholder-tag">Video Background Slot</span>
+        <span class="placeholder-hint">Video slot left empty as requested — ready for your video source</span>
+        <button id="open-video-config-btn" class="spatial-btn btn-xs btn-glass">Video Settings</button>
+      </div>
+    </div>
+
+    <!-- Procedural Ambient Canvas (Provides lively visual themes when video is empty) -->
+    <canvas id="focus-ambient-canvas" class="focus-ambient-canvas"></canvas>
+
+    <!-- Ambient Vignette / Spatial Lighting Overlay -->
+    <div class="focus-spatial-lighting"></div>
+
+    <!-- TOP FLOATING FOCUS DOCK -->
+    <div class="focus-top-dock glass-pill">
+      
+      <!-- Scene Presets Selector -->
+      <div class="scene-selector-group">
+        <span class="scene-group-label">Ambient Scene:</span>
+        <button class="scene-pill active" data-scene="cyber-city" title="Cyber City with glowing lights & rain">
+          Cyber City
+        </button>
+        <button class="scene-pill" data-scene="village" title="Peaceful village sunset setting">
+          Village Setting
+        </button>
+        <button class="scene-pill" data-scene="raining-night" title="Cozy raining night on window">
+          Raining Night
+        </button>
+        <button class="scene-pill" data-scene="skyscraper" title="High-rise skyscraper window overlooking skyline">
+          Skyscraper Window
+        </button>
+      </div>
+
+      <div class="focus-dock-divider"></div>
+
+      <!-- Pomodoro / Focus Timer -->
+      <div class="focus-timer-group">
+        <div class="timer-display-box">
+          <span class="timer-digits" id="focus-timer-display">25:00</span>
+          <span class="timer-state-dot" id="timer-state-dot"></span>
+        </div>
+        <button id="timer-toggle-btn" class="spatial-btn btn-xs btn-yellow">Start</button>
+        <button id="timer-reset-btn" class="spatial-btn btn-xs btn-ghost" title="Reset Timer">Reset</button>
+        <select id="timer-duration-select" class="spatial-select select-xs">
+          <option value="25">25m Focus</option>
+          <option value="50">50m Deep</option>
+          <option value="5">5m Break</option>
+          <option value="15">15m Break</option>
+          <option value="custom">Custom...</option>
+        </select>
+      </div>
+
+      <div class="focus-dock-divider"></div>
+
+      <!-- Ambient Audio Synthesizer (Built-in Web Audio API - 100% Client Side) -->
+      <div class="focus-audio-group">
+        <button id="audio-toggle-btn" class="spatial-btn btn-xs btn-glass" title="Toggle ambient sound generator">
+          <span id="audio-toggle-label">Ambient Sound</span>
+        </button>
+        <input type="range" id="audio-volume-slider" min="0" max="1" step="0.05" value="0.3" class="audio-slider" title="Volume">
+      </div>
+
+      <div class="focus-dock-divider"></div>
+
+      <!-- Fullscreen & Exit Buttons -->
+      <div class="focus-actions-group">
+        <button id="toggle-fullscreen-btn" class="spatial-btn btn-xs btn-ghost" title="Toggle Fullscreen">Fullscreen</button>
+        <button id="exit-focus-mode-btn" class="spatial-btn btn-xs btn-yellow" title="Exit Focus Mode">
+          Exit Focus
+        </button>
+      </div>
+    </div>
+
+    <!-- CENTER FLOATING TRANSPARENT TIMER (Unobstructed Focus Pod) -->
+    <div class="focus-center-desk">
+      <div class="transparent-timer-pod">
+        <div class="timer-pod-header">
+          <span class="timer-pulse-dot" id="center-timer-pulse"></span>
+          <span class="timer-mode-tag" id="center-timer-status">DEEP FOCUS</span>
+          <span class="live-clock-tag" id="center-live-clock">11:30 AM</span>
+        </div>
+
+        <!-- Big Running Time Digits (Click to set custom duration) -->
+        <div class="timer-display-huge">
+          <span id="center-timer-display" class="huge-timer-digits" title="Click to set custom duration">25:00</span>
+        </div>
+
+        <div class="timer-sub-caption" id="center-timer-sub">Time running • Stay in flow</div>
+
+        <!-- Transparent Action Controls -->
+        <div class="timer-pod-controls">
+          <div class="timer-buttons-row">
+            <button id="center-timer-toggle-btn" class="spatial-btn btn-yellow center-timer-btn">
+              <span id="center-play-text">Start</span>
+            </button>
+            <button id="center-timer-reset-btn" class="spatial-btn btn-glass-dark center-timer-btn" title="Reset timer">
+              Reset
+            </button>
+          </div>
+
+          <div class="timer-preset-pills">
+            <button class="timer-preset-btn active" data-mins="25">25m</button>
+            <button class="timer-preset-btn" data-mins="50">50m</button>
+            <button class="timer-preset-btn" data-mins="5">5m Break</button>
+            <button class="timer-preset-btn" data-mins="15">15m Break</button>
+            <button id="toggle-custom-timer-btn" class="timer-preset-btn" title="Set custom time">Custom...</button>
+          </div>
+
+          <!-- Custom Timer Duration Choice Input Panel -->
+          <div id="custom-timer-panel" class="custom-timer-panel hidden">
+            <span class="custom-timer-label">Custom Duration:</span>
+            <input type="number" id="custom-timer-mins" min="1" max="999" value="30" class="custom-timer-input">
+            <span class="custom-timer-unit">mins</span>
+            <button id="apply-custom-timer-btn" class="spatial-btn btn-xs btn-yellow">Set</button>
+            <button id="cancel-custom-timer-btn" class="spatial-btn btn-xs btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOM VIDEO CONFIGURATION POPOVER -->
+    <div id="video-config-popover" class="video-config-popover glass-card hidden">
+      <div class="popover-header">
+        <h4>Custom Background Video</h4>
+        <button id="close-video-config-btn" class="btn-ghost btn-xs">Close</button>
+      </div>
+      <p class="popover-desc">
+        Left empty by default as requested. You can load any video file from your computer or paste an MP4 link whenever you want!
+      </p>
+      <div class="popover-field">
+        <label>Upload Video File:</label>
+        <input type="file" id="focus-custom-video-file" accept="video/*" class="spatial-input">
+      </div>
+      <div class="popover-field">
+        <label>Or Paste Video URL:</label>
+        <div class="popover-url-row">
+          <input type="url" id="focus-custom-video-url" class="spatial-input" placeholder="https://example.com/ambient.mp4">
+          <button id="apply-video-url-btn" class="spatial-btn btn-sm btn-yellow">Apply</button>
+        </div>
+      </div>
+      <div class="popover-field">
+        <button id="clear-custom-video-btn" class="spatial-btn btn-sm btn-danger">Remove Video & Keep Empty</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Main JavaScript File -->
+  <script src="app.js"></script>
+</body>
+</html>
